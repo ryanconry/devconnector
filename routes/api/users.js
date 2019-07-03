@@ -34,21 +34,42 @@ router.post("/register", (req, res) => {
             newUser.password = hash; //save hashed password
             newUser
               .save() //save user to db
-              .then(user => res.json(user))
-              .catch(err => console.log(err));
+              .then(user => res.json(user)) //confirm user was saved
+              .catch(err => console.log(err)); //notify of an error
           });
         });
       }
     });
-  // const newUser = new User({
-  //   name: "Ryan",
-  //   email: "test@test.com",
-  //   password: "12345"
-  // });
-  // newUser
-  //   .save()
-  //   .then(user => res.json(user))
-  //   .catch(err => console.log(err));
+});
+
+//@route    GET api/users/register
+//@desc     Login users / Returning JWT Token
+//@access   Public
+router.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  //Find user by email in mongodb
+  User.findOne({ email: email }) //using User schema
+    .then(user => {
+      //promise returned, if email exists, user object is returned from db
+      //check for user
+      if (!user) {
+        return res
+          .status(404)
+          .json({ email: "Email not registered with devconnect" });
+      }
+
+      //check for password
+      bcrypt.compare(password, user.password).then(isMatch => {
+        //compare method will check plain text password submitted against hashed pw
+        if (isMatch) {
+          res.json({ msg: "Success" });
+        } else {
+          return res.status(400).json({ password: "Password incorrect" });
+        }
+      });
+    });
 });
 
 module.exports = router;
